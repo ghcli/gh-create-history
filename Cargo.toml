@@ -1,0 +1,32 @@
+[package]
+name = "gh-create-history"
+version = "0.1.0"
+edition = "2021"
+description = "GitHub CLI extension to generate synthetic git history for load testing"
+license = "MIT"
+repository = "https://github.com/ghcli/gh-create-history"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+git2 = { version = "0.19", features = ["vendored-libgit2"] }
+rand = "0.8"
+rand_chacha = "0.3"
+chrono = "0.4"
+indicatif = "0.17"
+anyhow = "1"
+
+[dev-dependencies]
+tempfile = "3"
+assert_cmd = "2"
+
+[lib]
+name = "gh_create_history"
+path = "src/lib.rs"
+
+[[bin]]
+name = "gh-create-history"
+path = "src/main.rs"
+
+[[test]]
+name = "eval"
+path = "tests/integration/eval.rs"
