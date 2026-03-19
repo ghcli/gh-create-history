@@ -1,0 +1,62 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: "0 2 * * 0" # Sunday 2am UTC
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run tests
+        run: cargo test --all-targets
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Run verify.sh
+        run: |
+          REPO_DIR=$(mktemp -d)
+          ./target/release/gh-create-history \
+            --commits 20 --branches 5 --size 1kb --oldest 60d \
+            --seed 12345 --quiet --repo-path "$REPO_DIR"
+          bash tests/eval/verify.sh "$REPO_DIR" \
+            --commits 20 --branches 5 --size 1kb --oldest 60d
+          rm -rf "$REPO_DIR"
+
+  test-large:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Run large test (200 commits × 20 branches)
+        run: |
+          REPO_DIR=$(mktemp -d)
+          ./target/release/gh-create-history \
+            --commits 200 --branches 20 --size 1kb --oldest 1yr \
+            --seed 99999 --quiet --repo-path "$REPO_DIR"
+          bash tests/eval/verify.sh "$REPO_DIR" \
+            --commits 200 --branches 20 --size 1kb --oldest 1yr
+          rm -rf "$REPO_DIR"
