@@ -55,26 +55,22 @@ jobs:
         id: name
         run: |
           ADJECTIVES=(
-            "turbulent" "caffeinated" "suspicious" "overcommitted" "rebased"
-            "detached" "conflicted" "stale" "dangling" "untracked"
-            "cherry-picked" "force-pushed" "squashed" "bisected" "blamed"
-            "orphaned" "shallow" "bare" "vendored" "pinned"
-            "flaky" "haunted" "cursed" "blessed" "chaotic"
-            "yolo" "legacy" "deprecated" "experimental" "unstable"
+            "angry" "lazy" "sneaky" "dizzy" "grumpy"
+            "soggy" "spicy" "crispy" "wobbly" "chunky"
+            "janky" "salty" "crusty" "mushy" "sketchy"
+            "zappy" "bonky" "wonky" "clunky" "funky"
           )
           NOUNS=(
-            "monorepo" "spaghetti" "dumpster-fire" "footgun" "yak-shave"
-            "bikeshed" "ratsnest" "hairball" "tarpit" "quagmire"
-            "lasagna" "frankenrepo" "junkyard" "labyrinth" "pandemonium"
-            "clusterfork" "trainwreck" "noodle-bowl" "pretzel" "origami"
-            "jenga-tower" "house-of-cards" "rube-goldberg" "duct-tape" "baling-wire"
-            "sourdough" "petri-dish" "thunderdome" "blender" "kaleidoscope"
+            "yak" "potato" "waffle" "noodle" "pickle"
+            "badger" "turnip" "muffin" "nugget" "walrus"
+            "gopher" "taco" "pretzel" "llama" "wombat"
+            "toaster" "pancake" "cactus" "narwhal" "platypus"
           )
           ADJ=${ADJECTIVES[$((RANDOM % ${#ADJECTIVES[@]}))]}
           NOUN=${NOUNS[$((RANDOM % ${#NOUNS[@]}))]}
-          REPO_NAME="${ADJ}-${NOUN}-$(date +%s | tail -c 5)"
+          REPO_NAME="${ADJ}-${NOUN}"
           echo "repo_name=${REPO_NAME}" >> "$GITHUB_OUTPUT"
-          echo "🎲 Generated name: ${REPO_NAME}"
+          echo "--- ${REPO_NAME} ---"
 
       - name: Create repo in org
         env:
