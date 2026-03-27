@@ -1,0 +1,125 @@
+name: Generate Load Test Repo
+
+on:
+  workflow_dispatch:
+    inputs:
+      org:
+        description: 'Target organization'
+        required: true
+        type: string
+      commits:
+        description: 'Commits per branch'
+        required: false
+        default: '1000'
+        type: string
+      branches:
+        description: 'Number of branches'
+        required: false
+        default: '100'
+        type: string
+      size:
+        description: 'Max file size (e.g. 1kb, 10kb, 1mb)'
+        required: false
+        default: '1kb'
+        type: string
+      oldest:
+        description: 'Time spread (e.g. 1yr, 6mo, 30d)'
+        required: false
+        default: '1yr'
+        type: string
+      seed:
+        description: 'RNG seed (blank for random)'
+        required: false
+        default: ''
+        type: string
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Pick a name for this masterpiece
+        id: name
+        run: |
+          ADJECTIVES=(
+            "turbulent" "caffeinated" "suspicious" "overcommitted" "rebased"
+            "detached" "conflicted" "stale" "dangling" "untracked"
+            "cherry-picked" "force-pushed" "squashed" "bisected" "blamed"
+            "orphaned" "shallow" "bare" "vendored" "pinned"
+            "flaky" "haunted" "cursed" "blessed" "chaotic"
+            "yolo" "legacy" "deprecated" "experimental" "unstable"
+          )
+          NOUNS=(
+            "monorepo" "spaghetti" "dumpster-fire" "footgun" "yak-shave"
+            "bikeshed" "ratsnest" "hairball" "tarpit" "quagmire"
+            "lasagna" "frankenrepo" "junkyard" "labyrinth" "pandemonium"
+            "clusterfork" "trainwreck" "noodle-bowl" "pretzel" "origami"
+            "jenga-tower" "house-of-cards" "rube-goldberg" "duct-tape" "baling-wire"
+            "sourdough" "petri-dish" "thunderdome" "blender" "kaleidoscope"
+          )
+          ADJ=${ADJECTIVES[$((RANDOM % ${#ADJECTIVES[@]}))]}
+          NOUN=${NOUNS[$((RANDOM % ${#NOUNS[@]}))]}
+          REPO_NAME="${ADJ}-${NOUN}-$(date +%s | tail -c 5)"
+          echo "repo_name=${REPO_NAME}" >> "$GITHUB_OUTPUT"
+          echo "🎲 Generated name: ${REPO_NAME}"
+
+      - name: Create repo in org
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          REPO="${{ inputs.org }}/${{ steps.name.outputs.repo_name }}"
+          echo "📦 Creating repo: ${REPO}"
+          gh repo create "${REPO}" --private --description \
+            "Load test repo: ${{ inputs.commits }} commits/branch × ${{ inputs.branches }} branches × ${{ inputs.size }} files over ${{ inputs.oldest }}"
+
+      - name: Generate history
+        run: |
+          REPO="${{ inputs.org }}/${{ steps.name.outputs.repo_name }}"
+          mkdir workspace && cd workspace && git init
+
+          git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${REPO}.git"
+
+          SEED_FLAG=""
+          if [ -n "${{ inputs.seed }}" ]; then
+            SEED_FLAG="--seed ${{ inputs.seed }}"
+          fi
+
+          ../target/release/gh-create-history \
+            --commits ${{ inputs.commits }} \
+            --branches ${{ inputs.branches }} \
+            --size ${{ inputs.size }} \
+            --oldest ${{ inputs.oldest }} \
+            ${SEED_FLAG} \
+            --quiet
+
+          echo ""
+          echo "📊 Results:"
+          echo "   Commits: $(git rev-list --all --count)"
+          echo "   Branches: $(git branch --list | wc -l | tr -d ' ')"
+          echo "   Tags: $(git tag --list | wc -l | tr -d ' ')"
+          echo "   Merges: $(git log --all --merges --oneline | wc -l | tr -d ' ')"
+
+      - name: Push everything
+        run: |
+          cd workspace
+          git push --all origin
+          git push --tags origin
+          REPO="${{ inputs.org }}/${{ steps.name.outputs.repo_name }}"
+          echo ""
+          echo "✅ Done: https://github.com/${REPO}"
+          echo "   Name: ${{ steps.name.outputs.repo_name }}"
+          echo "   Commits: $(git rev-list --all --count)"
+          echo "   Branches: $(git branch --list | wc -l | tr -d ' ')"

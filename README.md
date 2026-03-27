@@ -290,18 +290,6 @@ It outputs TAP format. 14 checks. Pass or fail. No opinions.
 
 ---
 
-## Why Rust
-
-Because generating 100,000 git objects in Python would take long enough to reconsider your career choices. Rust plus libgit2 equals memory-safe speed without the existential dread.
-
-Also the error messages are better than "Segmentation fault (core dumped)" which is what you get when you try to do this in C.
-
----
-
-## Contributing
-
-PRs welcome. If you find a way to make it faster, I owe you a mass produced beer.
-
 ## License
 
 MIT. Do whatever you want with it. Generate a million commits. I do not judge.
